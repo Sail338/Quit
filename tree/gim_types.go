@@ -28,3 +28,10 @@ func NewGimTree() GimTree {
     t.MasterRoot = nil
     return t
 }
+
+type Blob struct {
+    Name string
+    ShaHash string
+    ModTime int64
+    ActualPath string
+}

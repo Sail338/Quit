@@ -21,6 +21,9 @@ func (gt GimTree) GenerateMasterTree() {
 }
 
 func (gt GimTree) GenerateTree(path string) *TNode {
+    if path == "gim" {
+        return NewTNode()
+    }
     f, err := os.Open(path)
     check(err)
     var stat os.FileInfo
@@ -31,10 +34,10 @@ func (gt GimTree) GenerateTree(path string) *TNode {
         tn := NewTNode()
         var files []os.FileInfo
         files, err = ioutil.ReadDir(path)
-        tn.Children = make([]*TNode, len(files))
         check(err)
+        tn.Children = make([]*TNode, len(files))
         for i, file := range files {
-            var child *TNode
+            child := NewTNode()
             nodeMode := file.Mode()
             if nodeMode.IsDir() {
                 child = gt.GenerateTree(fp.Join(path, file.Name()))
@@ -72,7 +75,7 @@ func (gt GimTree) GenerateTNode(fpath string) *TNode {
     close(ch)
     b64sha256 := b64.StdEncoding.EncodeToString(<-ch)
     lastModified := stat.ModTime().UnixNano()
-    gt.WriteBlob(Base64FSCompat(b64sha256) + ".blob", b64sha256, lastModified)
+    gt.WriteBlob(Blob{Base64FSCompat(b64sha256) + ".blob", b64sha256, lastModified, fpath})
     fn := NewTNode() 
     fn.Data = Base64FSCompat(b64sha256) + ".blob"
     fn.NType = "file"
@@ -80,21 +83,23 @@ func (gt GimTree) GenerateTNode(fpath string) *TNode {
 }
 
 func WalkNode(node *TNode, level int) {
-    fmt.Printf("%s node.data: %s node.type %s\n",
-        strings.Repeat("----", level), node.Data, node.NType)
-    for _, child := range node.Children {
-        WalkNode(child, level+1)
+    if node != nil {
+        fmt.Printf("%s node.data: %s node.type %s\n",
+            strings.Repeat("----", level), node.Data, node.NType)
+        for _, child := range node.Children {
+            WalkNode(child, level+1)
+        }
     }
 }
 
-func (gt GimTree) WriteBlob(blobname, shaHash string, lastMod int64) {
+func (gt GimTree) WriteBlob(blob Blob) {
     _, err := os.Stat(gt.MasterRecordDir)
     if err != nil {
-        os.Mkdir(gt.MasterRecordDir, 0666)
+        os.Mkdir(gt.MasterRecordDir, 0755)
     }
     var f *os.File
-    f, err = os.Create(fp.Join(gt.MasterRecordDir, blobname + ".blob"))
+    f, err = os.Create(fp.Join(gt.MasterRecordDir, blob.Name))
     check(err)
-    data := fmt.Sprintf("%s %s", shaHash, lastMod)
+    data := fmt.Sprintf("%s %d %s", blob.ShaHash, blob.ModTime, blob.ActualPath)
     f.Write([]byte(data))
 }
