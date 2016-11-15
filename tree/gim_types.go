@@ -4,33 +4,25 @@ type TNode struct {
     Parent *TNode
     Children []*TNode
     Data string
-    NType string
+    Type string
+    Path string
 }
 
 func NewTNode() *TNode {
-    var n TNode
-    n.Parent = nil
-    n.Children = nil
-    n.Data = ""
-    n.NType = ""
-    return &n
+    return &TNode{nil, nil, "", "", ""}
 }
 
-type GimTree struct {
+type GimMasterTree struct {
     MasterDir string
     MasterRoot *TNode
     MasterRecordDir string
 }
 
-func NewGimTree() GimTree {
-    var t GimTree
-    t.MasterDir = ""
-    t.MasterRoot = nil
-    return t
+func NewGimMasterTree() GimMasterTree {
+    return GimMasterTree{"", nil, ""}
 }
 
 type Blob struct {
-    Name string
     ShaHash string
     ModTime int64
     ActualPath string

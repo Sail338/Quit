@@ -5,10 +5,8 @@ import (
 )
 
 func main() {
-    mtree := tree.NewGimTree()
-    mtree.MasterRecordDir = "./gim"
-    mtree.MasterDir = "."
-    mtree.GenerateMasterTree()
-    tree.WalkNode(mtree.MasterRoot, 0)
+    mtree := tree.InitGimMasterTree(".")
+    println(mtree.MasterRoot == nil)
+    mtree.WriteTree(mtree.MasterRoot)
 }
 
