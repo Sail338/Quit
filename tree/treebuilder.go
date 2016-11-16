@@ -125,8 +125,25 @@ func (gt GimMasterTree) WriteBlob(blob Blob) string {
         data := fmt.Sprintf("%s %d %s", blob.ShaHash, blob.ModTime, blob.ActualPath)
         f.Write([]byte(data))
         return Base64FSCompat(blob.ShaHash)
+    } else {
+        // cycle through filenames
+        t := 0
+        for true {
+            path = fp.Join(gt.MasterRecordDir,
+                        fmt.Sprintf("%s.%d.blob", Base64FSCompat(blob.ShaHash), t))
+            if !Fexists(path) {
+                f, err = os.Create(path)
+                check(err)
+                defer f.Close()
+                f.Write([]byte(fmt.Sprintf("DUP %s %s",
+                            Base64FSCompat(blob.ShaHash), blob.ActualPath)))
+                return fmt.Sprintf("%s.%d", blob.ShaHash, t)
+            }
+            t += 1
+        }
+        return ""
     }
-    return "preexisting"
+    return ""
 }
 
 /*
@@ -139,7 +156,6 @@ func (gt GimMasterTree) WriteBlob(blob Blob) string {
 
 func (gt GimMasterTree) WriteTree(root *TNode) string {
     if root != nil {
-        println("MEEP", root.Path, root.Type)
         switch (root.Type) {
             case "file":
                 tokens := strings.Split(root.Data, " ")
@@ -169,7 +185,21 @@ func (gt GimMasterTree) WriteTree(root *TNode) string {
                 if Fexists(path) {
                     // cycle through numeric suffixes until one is found
                     // (i.e. <hash>.1.tree)
-                }
+                    t := 1
+                    for true {
+                        path = fp.Join(gt.MasterRecordDir, fmt.Sprintf("%s.%d.tree", Base64FSCompat(treeHash), t))
+                        if !Fexists(path) {
+                            f, err := os.Create(path)
+                            check(err)
+                            defer f.Close()
+                            f.Write([]byte(fmt.Sprintf("%s %s",
+                                    Base64FSCompat(treeHash), root.Path)))
+                            return fmt.Sprintf("DUP %s %s", Base64FSCompat(treeHash), t)
+                        }
+                        t += 1
+                    }
+                    return ""
+                } 
                 f, err := os.Create(path)
                 check(err)
                 defer f.Close()
