@@ -1,22 +1,23 @@
-#ifdef _gim_types.h
-#define _gim_types.h
+#ifndef _gim_types
+#define _gim_types
+
 typedef struct TNode{
-	TNode *Parent;
-	TNode *Children;
+	struct	TNode* Parent;
+	struct TNode **Children;
 	char *data;
 	char *type;
-	char *path
+	char *path;
 } TNode;
 
 extern TNode* newTNode();
 
 typedef struct GimMasterTree  {
-	   char* MasterDir
+	   char* MasterDir;
 	   TNode* MasterRoot;
 	    char* MasterRecordDir;
 } GimMasterTree;
 
-extern GimMasterTree NewGimMasterTree();
+extern GimMasterTree* NewGimMasterTree();
 
 typedef  struct Blob {
 	    char* ShaHash;
